@@ -42,3 +42,10 @@ next-env.d.ts
 
 generated/
 prisma
+.playbook/
+code-style.md
+git-workflow.md
+mistakes.md
+project-structure.md
+CLAUDE.md
+GEMINI.md
