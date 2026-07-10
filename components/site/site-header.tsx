@@ -9,8 +9,8 @@ import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 
 const nav = [
-  { href: "/services", label: "Services" },
-  { href: "/about", label: "Studio" },
+  { href: "/book", label: "Services" },
+  { href: "/#studio", label: "Studio" },
   { href: "/login", label: "Dashboard" },
 ];
 

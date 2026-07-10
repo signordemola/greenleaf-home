@@ -59,7 +59,7 @@ export default function Home() {
                 See your price in 60 seconds
               </Link>
               <Link
-                href="/services"
+                href="/book"
                 className="text-sm text-foreground underline-offset-4 hover:underline"
               >
                 Browse services →
@@ -168,7 +168,7 @@ export default function Home() {
         </motion.div>
       </section>
 
-      <section className="mx-auto max-w-[88rem] px-6 py-28">
+      <section id="studio" className="mx-auto max-w-[88rem] px-6 py-28">
         <div className="grid gap-12 md:grid-cols-12">
           <motion.div
             variants={fadeInUp}

@@ -21,17 +21,12 @@ export function SiteFooter() {
           </h4>
           <ul className="mt-4 space-y-2 text-sm">
             <li>
-              <Link href="/services" className="hover:text-forest">
-                Services
-              </Link>
-            </li>
-            <li>
               <Link href="/book" className="hover:text-forest">
                 Book a clean
               </Link>
             </li>
             <li>
-              <Link href="/about" className="hover:text-forest">
+              <Link href="/#studio" className="hover:text-forest">
                 Studio
               </Link>
             </li>
@@ -45,11 +40,6 @@ export function SiteFooter() {
             <li>
               <Link href="/login" className="hover:text-forest">
                 Owner Login
-              </Link>
-            </li>
-            <li>
-              <Link href="/careers" className="hover:text-forest">
-                Careers
               </Link>
             </li>
             <li>

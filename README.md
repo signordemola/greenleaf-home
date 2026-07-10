@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Greenleaf Home Co.
+
+A branded operations platform for a residential cleaning company — instant quoting,
+recurring plans, a client self-service portal, and an owner dashboard — replacing a
+manual stack of forms, spreadsheets, and chat apps.
+
+Full product brief: [project-d-greenleaf-home-co.md](./project-d-greenleaf-home-co.md).
+
+## Stack
+
+- **Next.js 16** (App Router, Server Actions) + **React 19** + **TypeScript** (strict)
+- **Prisma 7** + **PostgreSQL** (Neon), via the `@prisma/adapter-pg` driver adapter
+- **Zod** for all input validation
+- **Better Auth** for the owner login/session
+- **Tailwind CSS v4** + **shadcn/ui**
+- **Lenis** smooth scrolling
+
+## Conventions
+
+This project follows the playbook in [.playbook/](./.playbook/) (see [AGENTS.md](./AGENTS.md)).
+Kebab-case filenames, split by concern (`types/`, `schemas/`, `actions/`, `lib/`),
+arrow functions, and money stored in **cents** everywhere.
 
 ## Getting Started
 
-First, run the development server:
+Requires **pnpm** and a PostgreSQL connection string.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm install
+cp .env.example .env   # then fill in the values below
+pnpm prisma migrate dev
+pnpm prisma db seed
 pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). The booking flow lives at `/book`;
+the owner dashboard at `/dashboard` (log in at `/login`). The seed creates an owner:
+`maya@greenleafhome.co` / `password123`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Environment variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Variable                                          | Purpose                      |
+| ------------------------------------------------- | ---------------------------- |
+| `DATABASE_URL`                                    | PostgreSQL connection string |
+| `BETTER_AUTH_SECRET`                              | Better Auth signing secret   |
+| `BETTER_AUTH_URL` / `NEXT_PUBLIC_BETTER_AUTH_URL` | Auth base URL                |
+| `NEXT_PUBLIC_BASE_URL`                            | App base URL                 |
 
-## Learn More
+## Scripts
 
-To learn more about Next.js, take a look at the following resources:
+| Command          | Description                                         |
+| ---------------- | --------------------------------------------------- |
+| `pnpm dev`       | Start the dev server (runs `prisma generate` first) |
+| `pnpm build`     | Validate schema, typecheck, lint, then build        |
+| `pnpm typecheck` | `tsc --noEmit`                                      |
+| `pnpm lint`      | ESLint                                              |
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Status
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**Implemented:** database schema + seed, owner auth (login/dashboard), the public
+booking wizard end-to-end (instant quote → server-validated booking that persists a
+client + plan/visit and issues a portal token).
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Not yet built** (specified in the brief): the client portal, Stripe card-on-file,
+Inngest background jobs, transactional emails, and the remaining owner dashboard views.
