@@ -1,85 +1,74 @@
 "use client";
 
-import { useState } from "react";
-import { authClient } from "@/lib/auth-client";
-import { useRouter } from "next/navigation";
+import { useState, useTransition } from "react";
+import { loginAction } from "@/actions/auth.actions";
+import { Logo } from "@/components/site/logo";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Field, FieldLabel } from "@/components/ui/field";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [pending, startTransition] = useTransition();
 
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setError("");
-
-    try {
-      const { error: signInError } = await authClient.signIn.email({
-        email,
-        password,
-      });
-
-      if (signInError) {
-        setError(signInError.message || "Invalid credentials");
-      } else {
-        router.push("/dashboard");
-      }
-    } catch (err) {
-      console.error(err);
-      setError("An unexpected error occurred");
-    } finally {
-      setLoading(false);
-    }
+    startTransition(async () => {
+      setError("");
+      const result = await loginAction({ email, password });
+      if (result && !result.ok) setError(result.error);
+    });
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
-      <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8">
-        <h1 className="text-2xl font-bold text-center text-green-800 mb-6">
-          Greenleaf Owner Login
+    <div className="flex min-h-screen items-center justify-center bg-linen/30 px-4">
+      <div className="w-full max-w-sm rounded-sm border border-border bg-background p-8 shadow-sm">
+        <Logo />
+        <h1 className="mt-8 font-display text-3xl leading-tight">
+          Owner login
         </h1>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Sign in to run your day.
+        </p>
 
         {error && (
-          <div className="bg-red-50 text-red-600 p-3 rounded-lg mb-4 text-sm font-medium">
+          <p className="mt-5 rounded-sm bg-red-50 px-4 py-3 text-sm text-red-600">
             {error}
-          </div>
+          </p>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email Address
-            </label>
-            <input
+        <form onSubmit={onSubmit} className="mt-6 space-y-5">
+          <Field>
+            <FieldLabel htmlFor="email">Email</FieldLabel>
+            <Input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
               required
+              className="rounded-sm"
             />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <input
+          </Field>
+          <Field>
+            <FieldLabel htmlFor="password">Password</FieldLabel>
+            <Input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-2 border rounded-lg focus:ring-2 focus:ring-green-500 outline-none"
               required
+              className="rounded-sm"
             />
-          </div>
-          <button
+          </Field>
+          <Button
             type="submit"
-            disabled={loading}
-            className="w-full bg-green-700 text-white py-2 rounded-lg font-bold hover:bg-green-800 transition disabled:opacity-50"
+            disabled={pending}
+            className="w-full rounded-full bg-forest text-white hover:opacity-90"
           >
-            {loading ? "Logging in..." : "Login to Dashboard"}
-          </button>
+            {pending ? "Signing in..." : "Sign in"}
+          </Button>
         </form>
       </div>
     </div>

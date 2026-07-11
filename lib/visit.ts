@@ -68,3 +68,32 @@ export const rateVisit = async (
     data: { visitId, clientId, score, comment },
   });
 };
+
+const JOB_TRANSITIONS: Record<string, string[]> = {
+  SCHEDULED: ["IN_PROGRESS"],
+  CONFIRMED: ["IN_PROGRESS"],
+  IN_PROGRESS: ["COMPLETED"],
+};
+
+export const markJobStatus = async (
+  visitId: string,
+  status: "IN_PROGRESS" | "COMPLETED",
+) => {
+  const visit = await prisma.visit.findUniqueOrThrow({
+    where: { id: visitId },
+  });
+  const allowed = JOB_TRANSITIONS[visit.status] ?? [];
+  if (!allowed.includes(status)) {
+    throw new Error(`Invalid job transition: ${visit.status} → ${status}`);
+  }
+
+  const now = new Date();
+  return prisma.visit.update({
+    where: { id: visitId },
+    data: {
+      status,
+      arrivedAt: status === "IN_PROGRESS" ? now : visit.arrivedAt,
+      completedAt: status === "COMPLETED" ? now : visit.completedAt,
+    },
+  });
+};
