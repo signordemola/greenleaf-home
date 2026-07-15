@@ -1,0 +1,345 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model ServiceType {
+  id           String        @id @default(cuid())
+  slug         String        @unique
+  name         String
+  description  String?
+  displayOrder Int           @default(0)
+  isActive     Boolean       @default(true)
+  tiers        PricingTier[]
+  plans        Plan[]
+  visits       Visit[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([isActive])
+}
+
+model PricingTier {
+  id            String      @id @default(cuid())
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId String
+  label         String
+  bedrooms      Int
+  bathrooms     Int
+  basePrice     Int
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([serviceTypeId, bedrooms, bathrooms])
+  @@index([serviceTypeId])
+}
+
+model AddOn {
+  id           String   @id @default(cuid())
+  slug         String   @unique
+  name         String
+  price        Int
+  isActive     Boolean  @default(true)
+  displayOrder Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([isActive])
+}
+
+model FrequencyDiscount {
+  id         String        @id @default(cuid())
+  frequency  PlanFrequency @unique
+  percentage Int
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+}
+
+model Client {
+  id                    String  @id @default(cuid())
+  email                 String  @unique
+  name                  String
+  phone                 String
+  portalToken           String  @unique
+  stripeCustomerId      String? @unique
+  stripePaymentMethodId String?
+
+  address    String
+  city       String @default("Austin")
+  state      String @default("TX")
+  zipCode    String
+  bedrooms   Int
+  bathrooms  Int
+  squareFeet Int?
+
+  entryMethod String?
+  accessNotes String?
+  alarmCode   String?
+  petInfo     String?
+
+  preferredCleanerId  String?
+  preferredCleaner    Cleaner? @relation("PreferredCleaner", fields: [preferredCleanerId], references: [id])
+  specialInstructions String?
+
+  plans     Plan[]
+  visits    Visit[]
+  ratings   Rating[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([zipCode])
+  @@index([preferredCleanerId])
+}
+
+model Plan {
+  id            String        @id @default(cuid())
+  client        Client        @relation(fields: [clientId], references: [id])
+  clientId      String
+  serviceType   ServiceType   @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId String
+  frequency     PlanFrequency
+  status        PlanStatus    @default(ACTIVE)
+
+  basePrice      Int
+  discountPct    Int
+  recurringPrice Int
+
+  addOnSlugs String[]
+  addOnTotal Int      @default(0)
+
+  preferredDay  Int
+  timeWindow    String    @default("morning")
+  startDate     DateTime
+  nextVisitDate DateTime?
+
+  assignedCrewId String?
+  assignedCrew   Crew?   @relation(fields: [assignedCrewId], references: [id])
+
+  pausedAt   DateTime?
+  resumeDate DateTime?
+
+  visits             Visit[]
+  cancelledAt        DateTime?
+  cancellationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([clientId])
+  @@index([serviceTypeId])
+  @@index([assignedCrewId])
+  @@index([status])
+  @@index([nextVisitDate])
+}
+
+enum PlanFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+  ONE_TIME
+}
+
+enum PlanStatus {
+  ACTIVE
+  PAUSED
+  CANCELLED
+}
+
+model Visit {
+  id            String      @id @default(cuid())
+  plan          Plan?       @relation(fields: [planId], references: [id])
+  planId        String?
+  client        Client      @relation(fields: [clientId], references: [id])
+  clientId      String
+  serviceType   ServiceType @relation(fields: [serviceTypeId], references: [id])
+  serviceTypeId String
+  crew          Crew?       @relation(fields: [crewId], references: [id])
+  crewId        String?
+
+  scheduledDate DateTime    @db.Date
+  timeWindow    String      @default("morning")
+  status        VisitStatus @default(SCHEDULED)
+
+  servicePrice Int
+  addOnSlugs   String[]
+  addOnTotal   Int      @default(0)
+  totalPrice   Int
+
+  stripePaymentIntentId String?       @unique
+  paymentStatus         PaymentStatus @default(PENDING)
+  paidAt                DateTime?
+
+  arrivedAt   DateTime?
+  completedAt DateTime?
+
+  rating Rating?
+
+  ownerNotes String?
+  skipReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([planId])
+  @@index([clientId])
+  @@index([serviceTypeId])
+  @@index([crewId])
+  @@index([scheduledDate])
+  @@index([status])
+}
+
+enum VisitStatus {
+  SCHEDULED
+  CONFIRMED
+  IN_PROGRESS
+  COMPLETED
+  SKIPPED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  CHARGED
+  FAILED
+  REFUNDED
+  WAIVED
+}
+
+model Crew {
+  id        String    @id @default(cuid())
+  name      String
+  isActive  Boolean   @default(true)
+  cleaners  Cleaner[]
+  plans     Plan[]
+  visits    Visit[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  @@index([isActive])
+}
+
+model Cleaner {
+  id          String   @id @default(cuid())
+  name        String
+  phone       String?
+  photoUrl    String?
+  crew        Crew     @relation(fields: [crewId], references: [id])
+  crewId      String
+  isActive    Boolean  @default(true)
+  preferredBy Client[] @relation("PreferredCleaner")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([crewId])
+  @@index([isActive])
+}
+
+model Rating {
+  id        String   @id @default(cuid())
+  visit     Visit    @relation(fields: [visitId], references: [id])
+  visitId   String   @unique
+  client    Client   @relation(fields: [clientId], references: [id])
+  clientId  String
+  score     Int
+  comment   String?
+  createdAt DateTime @default(now())
+
+  @@index([clientId])
+}
+
+model ServiceArea {
+  id        String   @id @default(cuid())
+  zipCode   String   @unique
+  name      String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([isActive])
+}
+
+model BlockedDate {
+  id        String   @id @default(cuid())
+  date      DateTime @db.Date
+  reason    String?
+  createdAt DateTime @default(now())
+
+  @@index([date])
+}
+
+model CrewAvailability {
+  id        String  @id @default(cuid())
+  crewId    String
+  dayOfWeek Int
+  startTime String
+  endTime   String
+  isActive  Boolean @default(true)
+  maxJobs   Int     @default(4)
+
+  @@unique([crewId, dayOfWeek])
+  @@index([crewId])
+}
+
+model User {
+  id            String    @id
+  name          String
+  email         String    @unique
+  emailVerified Boolean
+  image         String?
+  createdAt     DateTime
+  updatedAt     DateTime
+  sessions      Session[]
+  accounts      Account[]
+
+  @@map("user")
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String
+  createdAt DateTime
+  updatedAt DateTime
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([token])
+  @@index([userId])
+  @@map("session")
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime
+  updatedAt             DateTime
+
+  @@index([userId])
+  @@map("account")
+}
+
+model Verification {
+  id         String    @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime?
+  updatedAt  DateTime?
+
+  @@map("verification")
+}
